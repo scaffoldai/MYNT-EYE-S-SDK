@@ -31,6 +31,24 @@ bool sort_sn(std::shared_ptr<Device> device1,
 
 namespace device {
 
+std::size_t get_num_devices() {
+  Context context;
+  auto &&devices = context.devices();
+  std::size_t n = devices.size();
+  return n;
+}
+
+std::shared_ptr<Device> get_ith_device(std::size_t index) {
+  Context context;
+  auto &&devices = context.devices();
+  std::size_t n = devices.size();
+  if (index < n) {
+    return devices[index];
+  }
+  return nullptr;
+}
+
+
 std::shared_ptr<Device> select() {
   LOG(INFO) << "Detecting MYNT EYE devices";
   Context context;

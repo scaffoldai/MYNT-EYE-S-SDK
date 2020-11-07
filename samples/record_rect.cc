@@ -23,141 +23,80 @@
 
 MYNTEYE_USE_NAMESPACE
 
-int main(int argc, char *argv[]) {
-  glog_init _(argc, argv);
+cv::Mat grab_frame(std::shared_ptr<API> api) {
+  api->WaitForStreams();
+  auto &&left_data = api->GetStreamData(Stream::LEFT_RECTIFIED);
+  auto &&right_data = api->GetStreamData(Stream::RIGHT_RECTIFIED);
 
-  auto &&api = API::Create(argc, argv);
-  if (!api) return 1;
+  if (!left_data.frame.empty() && !right_data.frame.empty()) {
+    //cv::Mat img;
+    //cv::hconcat(left_data.frame, right_data.frame, img);
+    //cv::imshow(frame_name, img);
+    return left_data.frame;
+  }
+  cv::Mat empty;
+  return empty;
+}
 
-  auto request = api->GetStreamRequest();
-
-//   struct StreamRequest {
-//   /** Stream width in pixels */
-//   std::uint16_t width;
-//   /** Stream height in pixels */
-//   std::uint16_t height;
-//   /** Stream pixel format */
-//   Format format;
-//   /** Stream frames per second */
-//   std::uint16_t fps;
-//   }
-
-  // request.fps = 10;
-  api->ConfigStreamRequest(request);
+void init_stream(std::shared_ptr<API> api) {
+  //auto request = api->GetStreamRequest();
+  //request.fps = 10;
+  //api->ConfigStreamRequest(request);
   api->EnableMotionDatas();
-
-  api->EnableStreamData(Stream::DEPTH);
-
+  api->EnableStreamData(Stream::LEFT_RECTIFIED);
+  api->EnableStreamData(Stream::RIGHT_RECTIFIED);
   api->Start(Source::ALL);
+}
 
-  const char *outdir;
+int main(int argc, char *argv[]) {
+  std::string out_dir = "/media/pi/localdata/mynteye";
+  std::string viz_device = "00D325030009072C"; // Inna's MYNT eye
+  int device_idx;
+  int showviz = 0;
+  
+  glog_init _(argc, argv);
   if (argc >= 2) {
-    outdir = argv[1];
-  } else {
-    outdir = "./dataset";
+    device_idx = std::stoi(argv[1]);
   }
-  tools::Dataset dataset(outdir);
+  else {
+    std::cout << "Device index not specified" << std::endl;
+    return 1;
+  }
+  
+  std::size_t num_devices = device::get_num_devices();
+  std::cout << "There are " << num_devices << " devices" << std::endl;
+  
+  std::shared_ptr<API> &&api = API::Create(argc, argv, device_idx);
 
-  cv::namedWindow("frame");
-
-  std::size_t img_count = 0;
-  std::size_t imu_count = 0;
-  auto &&time_beg = times::now();
+  if (api != nullptr) {
+    std::cout << "Successfully opened device with serial number " << api->GetInfo()->serial_number << std::endl;
+    if (viz_device.compare(api->GetInfo()->serial_number) == 0) {
+      showviz = 1;
+    }
+    init_stream(api);
+  }
+  else {
+    return 1;
+  }
+  
+  if (showviz) {
+    cv::namedWindow("frame");
+  }
+  
   while (true) {
-    api->WaitForStreams();
-
-    auto &&left_datas = api->GetStreamDatas(Stream::LEFT);
-    auto &&right_datas = api->GetStreamDatas(Stream::RIGHT);
-    auto &&depth_data = api->GetStreamData(Stream::DEPTH);
-    auto &&disparity_data = api->GetStreamData(Stream::DISPARITY);
-    img_count += left_datas.size();
-
-    auto &&motion_datas = api->GetMotionDatas();
-    imu_count += motion_datas.size();
-    cv::Mat img;
-    if (left_datas.size() > 0 && right_datas.size() > 0) {
-      auto &&left_frame = left_datas.back().frame_raw;
-      auto &&right_frame = right_datas.back().frame_raw;
-      if (right_frame->data() && left_frame->data()) {
-        if (left_frame->format() == Format::GREY) {
-          cv::Mat left_img(
-              left_frame->height(), left_frame->width(), CV_8UC1,
-              left_frame->data());
-          cv::Mat right_img(
-              right_frame->height(), right_frame->width(), CV_8UC1,
-              right_frame->data());
-          cv::hconcat(left_img, right_img, img);
-        } else if (left_frame->format() == Format::YUYV) {
-          cv::Mat left_img(
-              left_frame->height(), left_frame->width(), CV_8UC2,
-              left_frame->data());
-          cv::Mat right_img(
-              right_frame->height(), right_frame->width(), CV_8UC2,
-              right_frame->data());
-          cv::cvtColor(left_img, left_img, cv::COLOR_YUV2BGR_YUY2);
-          cv::cvtColor(right_img, right_img, cv::COLOR_YUV2BGR_YUY2);
-          cv::hconcat(left_img, right_img, img);
-        } else if (left_frame->format() == Format::BGR888) {
-          cv::Mat left_img(
-              left_frame->height(), left_frame->width(), CV_8UC3,
-              left_frame->data());
-          cv::Mat right_img(
-              right_frame->height(), right_frame->width(), CV_8UC3,
-              right_frame->data());
-          cv::hconcat(left_img, right_img, img);
-        } else {
-          return -1;
-        }
-        cv::imshow("frame", img);
+    cv::Mat img = grab_frame(api);
+    
+    if (showviz) {
+      if (!img.empty()) {
+          cv::imshow("frame", img);
       }
-    }
-
-    if (img_count > 10 && imu_count > 50) {  // save
-      // save Stream::LEFT
-      for (auto &&left : left_datas) {
-        dataset.SaveStreamData(Stream::LEFT, left);
+      
+      char key = static_cast<char>(cv::waitKey(1));
+      if (key == 27 || key == 'q' || key == 'Q') {  // ESC/Q
+        break;
       }
-      // save Stream::RIGHT
-      // for (auto &&right : right_datas) {
-      //   dataset.SaveStreamData(Stream::RIGHT, right);
-      // }
-
-      // save Stream::DEPTH
-      if (!depth_data.frame.empty()) {
-        dataset.SaveStreamData(Stream::DEPTH, depth_data);
-      }
-
-      // save Stream::DISPARITY
-      if (!disparity_data.frame.empty()) {
-        dataset.SaveStreamData(Stream::DISPARITY, disparity_data);
-      }
-
-      for (auto &&motion : motion_datas) {
-        dataset.SaveMotionData(motion);
-      }
-
-      std::cout << "\rSaved " << img_count << " imgs"
-                << ", " << imu_count << " imus" << std::flush;
-    }
-
-    char key = static_cast<char>(cv::waitKey(1));
-    if (key == 27 || key == 'q' || key == 'Q') {  // ESC/Q
-      break;
     }
   }
-  std::cout << " to " << outdir << std::endl;
-  auto &&time_end = times::now();
-
-  api->Stop(Source::ALL);
-
-  float elapsed_ms =
-      times::count<times::microseconds>(time_end - time_beg) * 0.001f;
-  LOG(INFO) << "Time beg: " << times::to_local_string(time_beg)
-            << ", end: " << times::to_local_string(time_end)
-            << ", cost: " << elapsed_ms << "ms";
-  LOG(INFO) << "Img count: " << img_count
-            << ", fps: " << (1000.f * img_count / elapsed_ms);
-  LOG(INFO) << "Imu count: " << imu_count
-            << ", hz: " << (1000.f * imu_count / elapsed_ms);
+  
   return 0;
 }

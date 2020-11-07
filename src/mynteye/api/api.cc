@@ -240,6 +240,19 @@ std::shared_ptr<API> API::Create(
   return Create(device);
 }
 
+std::shared_ptr<API> API::Create(
+    int argc, char *argv[], const std::size_t device_index) {
+  static glog_init _(argc, argv);
+  auto &&device = device::get_ith_device(device_index);
+  if (device != nullptr) {
+    return Create(device);
+  }
+  else {
+    LOG(ERROR) <<"Device " << device_index << " does not exist. ";
+    return nullptr;
+  }
+}
+
 std::shared_ptr<API> API::Create(const std::shared_ptr<Device> &device) {
   std::shared_ptr<API> api = nullptr;
   if (device != nullptr) {

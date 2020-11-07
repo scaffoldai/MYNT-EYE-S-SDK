@@ -117,6 +117,18 @@ class MYNTEYE_API API {
    */
   static std::shared_ptr<API> Create(
       int argc, char *argv[], const std::shared_ptr<Device> &device);
+  
+  /**
+   * Create the API instance.
+   * @param argc the arg count.
+   * @param argv the arg values.
+   * @param device_index the index of the selected device.
+   * @return the API instance if the given index is valid; null pointer otherwise.
+   * @note This will init glog with args.
+   */
+  static std::shared_ptr<API> Create(
+    int argc, char *argv[], const std::size_t device_index);
+    
   /**
    * Create the API instance.
    * @param device the selected device.

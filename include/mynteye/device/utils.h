@@ -40,6 +40,10 @@ namespace device {
  */
 MYNTEYE_API std::shared_ptr<Device> select();
 
+MYNTEYE_API std::size_t get_num_devices();
+
+MYNTEYE_API std::shared_ptr<Device> get_ith_device(std::size_t index);
+
 /**
  * @ingroup utils
  *
