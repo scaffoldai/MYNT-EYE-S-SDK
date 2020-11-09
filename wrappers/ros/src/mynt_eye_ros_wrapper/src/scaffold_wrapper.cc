@@ -44,6 +44,7 @@ int main(int argc, char **argv)
    * NodeHandle destructed will close down the node.
    */
   ros::NodeHandle n;
+  ros::NodeHandle private_nh_("~");
 
   /**
    * The advertise() function is how you tell ROS that you want to
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
    * buffer up before throwing some away.
    */
   std::string serial_num; 
-  if (n.getParam("/scaffold_mynteye_wrapper/serial_number", serial_num))
+  if (private_nh_.getParam("serial_number", serial_num))
   {
     ROS_INFO("Got param serial_number = %s", serial_num.c_str());
   }

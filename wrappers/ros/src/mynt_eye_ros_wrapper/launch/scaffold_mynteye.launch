@@ -1,7 +1,13 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="serial_number" default="" />
-  <node name="scaffold_mynteye_wrapper" pkg="mynt_eye_ros_wrapper" type="scaffold_mynteye_wrapper" output="screen" respawn="true" respawn_delay="5">
-	<param name="serial_number" type="string" value="$(arg serial_number)" />
-  </node>
+  <group ns="mynteye_head">
+	  <node name="scaffold_mynteye_wrapper" pkg="mynt_eye_ros_wrapper" type="scaffold_mynteye_wrapper" output="screen" respawn="true" respawn_delay="5">
+		<param name="serial_number" type="string" value="00D325030009072C" />
+	  </node>
+  </group>
+  <group ns="mynteye_cabin">
+	  <node name="scaffold_mynteye_wrapper" pkg="mynt_eye_ros_wrapper" type="scaffold_mynteye_wrapper" output="screen" respawn="true" respawn_delay="5">
+		<param name="serial_number" type="string" value="02811A1200090807" />
+	  </node>
+  </group>
 </launch>
