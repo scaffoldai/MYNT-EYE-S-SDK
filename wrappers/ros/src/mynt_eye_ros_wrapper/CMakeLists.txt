@@ -111,6 +111,10 @@ add_dependencies(mynteye_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 add_executable(mynteye_wrapper_node src/wrapper_node.cc)
 target_link_libraries(mynteye_wrapper_node mynteye_wrapper ${LINK_LIBS})
 
+add_executable(scaffold_mynteye_wrapper src/scaffold_wrapper.cc)
+target_link_libraries(scaffold_mynteye_wrapper ${LINK_LIBS})
+add_dependencies(scaffold_mynteye_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 if(MSVC OR MSYS OR MINGW)
   target_compile_definitions(mynteye_wrapper_node
     PUBLIC GLOG_NO_ABBREVIATED_SEVERITIES

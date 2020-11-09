@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="serial_number" default="" />
+  <node name="scaffold_mynteye_wrapper" pkg="mynt_eye_ros_wrapper" type="scaffold_mynteye_wrapper" output="screen" respawn="true" respawn_delay="5">
+	<param name="serial_number" type="string" value="$(arg serial_number)" />
+  </node>
+</launch>
