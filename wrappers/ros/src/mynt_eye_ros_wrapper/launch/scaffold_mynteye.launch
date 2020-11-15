@@ -10,4 +10,8 @@
 		<param name="serial_number" type="string" value="02811A1200090807" />
 	  </node>
   </group>
+  <node name="viewer_head" pkg="mynt_eye_ros_wrapper" type="viewer_head.py" output="screen" respawn="true" respawn_delay="5">
+  </node>
+  <node pkg="rosbag" type="record" name="rosbag_record_cam" output="screen" respawn="true" respawn_delay="5"
+   args="record --split --duration=20m -o /media/pi/localdata/mynteye/cabin+head /mynteye_cabin/left_rect /mynteye_cabin/right_rect /mynteye_head/left_rect /mynteye_head/right_rect" />
 </launch>
