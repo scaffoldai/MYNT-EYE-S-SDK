@@ -1,0 +1,12 @@
+[Unit]
+Description=Run roslaunch to start recording mynt eye data
+
+[Service]
+Type=simple
+Environment=XAUTHORITY=/home/pi/.Xauthority
+Environment=DISPLAY=:0.0
+ExecStart=/home/pi/start_ros.bash
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target
